@@ -1,0 +1,100 @@
+name: Build RCAMP
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    name: Linux GUI and CLI
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: dtolnay/rust-toolchain@stable
+        with: { components: rustfmt, clippy }
+      - name: Install Linux bundle dependencies
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - run: npm ci
+      - run: npm run check
+      - run: cargo fmt --check
+      - run: cargo test -p rcamp-core -p rcamp-cli
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Build AppImage
+        run: npm run tauri build -- --bundles appimage
+      - name: Verify AppImage
+        run: |
+          find src-tauri/target/release/bundle/appimage -name '*.AppImage' -type f -size +1M -print -quit | grep .
+      - uses: actions/upload-artifact@v4
+        with: { name: RCAMP-linux-appimage, path: src-tauri/target/release/bundle/appimage/*.AppImage, if-no-files-found: error }
+      - name: Package CLI
+        run: tar -C target/release -czf rcamp-linux-x86_64.tar.gz rcamp
+      - uses: actions/upload-artifact@v4
+        with: { name: RCAMP-cli-linux, path: rcamp-linux-x86_64.tar.gz }
+
+  android:
+    name: Android APK and AAB
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK packages and Rust target
+        run: |
+          sdkmanager 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0' 'ndk;27.2.12479018'
+          rustup target add aarch64-linux-android
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
+          echo "NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
+      - run: npm ci
+      - run: npm run check
+      - name: Initialize Android project
+        run: npm run tauri android init -- --ci
+      - name: Build universal APK
+        run: npm run tauri android build -- --apk --target aarch64
+      - name: Verify APK exists and is plausible
+        run: |
+          apk="$(find src-tauri/gen/android/app/build/outputs/apk -name '*.apk' -type f -size +1M -print -quit)"
+          test -n "$apk"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$apk" | grep "package: name="
+      - uses: actions/upload-artifact@v4
+        with: { name: RCAMP-android-apk, path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk, if-no-files-found: error }
+      - name: Build Android App Bundle
+        run: npm run tauri android build -- --aab --target aarch64
+      - uses: actions/upload-artifact@v4
+        with: { name: RCAMP-android-aab, path: src-tauri/gen/android/app/build/outputs/bundle/**/*.aab, if-no-files-found: error }
+
+  windows:
+    name: Windows GUI and CLI
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: dtolnay/rust-toolchain@stable
+        with: { components: rustfmt, clippy }
+      - run: npm ci
+      - run: npm run check
+      - run: cargo fmt --check
+      - run: cargo test -p rcamp-core -p rcamp-cli
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Build MSI
+        run: npm run tauri build -- --bundles msi
+      - name: Verify MSI
+        shell: pwsh
+        run: if (-not (Get-ChildItem src-tauri/target/release/bundle/msi -Recurse -Filter *.msi | Where-Object Length -gt 1MB | Select-Object -First 1)) { throw 'MSI was not produced' }
+      - uses: actions/upload-artifact@v4
+        with: { name: RCAMP-windows-msi, path: src-tauri/target/release/bundle/msi/**/*.msi, if-no-files-found: error }
+      - name: Package CLI
+        shell: pwsh
+        run: Compress-Archive -Path target/release/rcamp.exe -DestinationPath rcamp-windows-x86_64.zip
+      - uses: actions/upload-artifact@v4
+        with: { name: RCAMP-cli-windows, path: rcamp-windows-x86_64.zip }
