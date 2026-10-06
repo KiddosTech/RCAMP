@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">RCAMP mark</title><desc id="desc">A remote-control signal around a device core</desc>
+  <rect width="256" height="256" rx="52" fill="#101216"/>
+  <path d="M128 42v31M128 183v31M42 128h31M183 128h31" stroke="#8dffcf" stroke-width="12" stroke-linecap="round"/>
+  <rect x="76" y="76" width="104" height="104" rx="29" fill="#8dffcf"/>
+  <path d="M104 106h34c13 0 23 10 23 23s-10 23-23 23h-34V106Zm22 19v18h12c5 0 9-4 9-9s-4-9-9-9h-12Z" fill="#101216"/>
+</svg>

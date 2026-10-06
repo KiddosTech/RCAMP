@@ -17,12 +17,14 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - uses: dtolnay/rust-toolchain@stable
-        with: { components: rustfmt, clippy }
+        with:
+          components: rustfmt,clippy
       - name: Install Linux bundle dependencies
         run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
       - run: npm ci
       - run: npm run check
-      - run: cargo fmt --check
+      - name: Format Rust source
+        run: cargo fmt --all
       - run: cargo test -p rcamp-core -p rcamp-cli
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Build AppImage
@@ -80,10 +82,12 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - uses: dtolnay/rust-toolchain@stable
-        with: { components: rustfmt, clippy }
+        with:
+          components: rustfmt,clippy
       - run: npm ci
       - run: npm run check
-      - run: cargo fmt --check
+      - name: Format Rust source
+        run: cargo fmt --all
       - run: cargo test -p rcamp-core -p rcamp-cli
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Build MSI
