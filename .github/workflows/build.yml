@@ -28,7 +28,7 @@ jobs:
       - run: cargo test -p rcamp-core -p rcamp-cli
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Build AppImage
-        run: npm run tauri build -- --bundles appimage
+        run: npx tauri build --bundles appimage
       - name: Verify AppImage
         run: |
           find src-tauri/target/release/bundle/appimage -name '*.AppImage' -type f -size +1M -print -quit | grep .
@@ -49,19 +49,21 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: '17' }
-      - uses: android-actions/setup-android@v3
       - name: Install Android SDK packages and Rust target
         run: |
-          sdkmanager 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0' 'ndk;27.2.12479018'
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -path '*/bin/sdkmanager' -type f -print -quit)"
+          test -n "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0' 'ndk;27.2.12479018'
           rustup target add aarch64-linux-android
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
           echo "NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
       - run: npm ci
       - run: npm run check
       - name: Initialize Android project
-        run: npm run tauri android init -- --ci
+        run: npx tauri android init --ci
       - name: Build universal APK
-        run: npm run tauri android build -- --apk --target aarch64
+        run: npx tauri android build --apk --target aarch64
       - name: Verify APK exists and is plausible
         run: |
           apk="$(find src-tauri/gen/android/app/build/outputs/apk -name '*.apk' -type f -size +1M -print -quit)"
@@ -70,7 +72,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: { name: RCAMP-android-apk, path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk, if-no-files-found: error }
       - name: Build Android App Bundle
-        run: npm run tauri android build -- --aab --target aarch64
+        run: npx tauri android build --aab --target aarch64
       - uses: actions/upload-artifact@v4
         with: { name: RCAMP-android-aab, path: src-tauri/gen/android/app/build/outputs/bundle/**/*.aab, if-no-files-found: error }
 
@@ -91,7 +93,7 @@ jobs:
       - run: cargo test -p rcamp-core -p rcamp-cli
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Build MSI
-        run: npm run tauri build -- --bundles msi
+        run: npx tauri build --bundles msi
       - name: Verify MSI
         shell: pwsh
         run: if (-not (Get-ChildItem src-tauri/target/release/bundle/msi -Recurse -Filter *.msi | Where-Object Length -gt 1MB | Select-Object -First 1)) { throw 'MSI was not produced' }

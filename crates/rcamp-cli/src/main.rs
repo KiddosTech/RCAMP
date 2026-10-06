@@ -1,4 +1,4 @@
-use std::io::{self, stdout};
+use std::io::stdout;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
