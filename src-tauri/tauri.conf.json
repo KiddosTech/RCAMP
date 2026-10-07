@@ -13,5 +13,10 @@
     "windows": [{ "title": "RCAMP", "width": 1120, "height": 760, "minWidth": 720, "minHeight": 500 }],
     "security": { "csp": "default-src 'self'; connect-src 'self' ipc: http://ipc.localhost" }
   },
-  "bundle": { "active": true, "targets": "all", "category": "Utility" }
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "Utility",
+    "icon": ["icons/icon.png", "icons/icon.ico"]
+  }
 }
