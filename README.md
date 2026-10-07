@@ -102,6 +102,22 @@ rcamp doctor
 rcamp version
 ```
 
+### Install RCAMP/CLI from a release
+
+After a `v*` tag is published, GitHub Actions creates release assets for Linux and Windows. Install without Rust:
+
+```powershell
+irm https://raw.githubusercontent.com/KiddosTech/RCAMP/main/scripts/install.ps1 | iex
+```
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/KiddosTech/RCAMP/main/scripts/install.sh | sh
+# or
+wget -qO- https://raw.githubusercontent.com/KiddosTech/RCAMP/main/scripts/install.sh | sh
+```
+
+For a pinned release, set `RCAMP_VERSION` before running the script (for example `v0.1.0`).
+
 ## Device profiles
 
 Profiles describe a device; they do not execute arbitrary code or assume a common protocol.
