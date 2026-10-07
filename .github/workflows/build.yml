@@ -31,9 +31,9 @@ jobs:
         run: npx tauri build --bundles appimage
       - name: Verify AppImage
         run: |
-          find src-tauri/target/release/bundle/appimage -name '*.AppImage' -type f -size +1M -print -quit | grep .
+          find target/release/bundle/appimage -name '*.AppImage' -type f -size +1M -print -quit | grep .
       - uses: actions/upload-artifact@v4
-        with: { name: RCAMP-linux-appimage, path: src-tauri/target/release/bundle/appimage/*.AppImage, if-no-files-found: error }
+        with: { name: RCAMP-linux-appimage, path: target/release/bundle/appimage/*.AppImage, if-no-files-found: error }
       - name: Package CLI
         run: tar -C target/release -czf rcamp-linux-x86_64.tar.gz rcamp
       - uses: actions/upload-artifact@v4
@@ -96,9 +96,9 @@ jobs:
         run: npx tauri build --bundles msi
       - name: Verify MSI
         shell: pwsh
-        run: if (-not (Get-ChildItem src-tauri/target/release/bundle/msi -Recurse -Filter *.msi | Where-Object Length -gt 1MB | Select-Object -First 1)) { throw 'MSI was not produced' }
+        run: if (-not (Get-ChildItem target/release/bundle/msi -Recurse -Filter *.msi | Where-Object Length -gt 1MB | Select-Object -First 1)) { throw 'MSI was not produced' }
       - uses: actions/upload-artifact@v4
-        with: { name: RCAMP-windows-msi, path: src-tauri/target/release/bundle/msi/**/*.msi, if-no-files-found: error }
+        with: { name: RCAMP-windows-msi, path: target/release/bundle/msi/**/*.msi, if-no-files-found: error }
       - name: Package CLI
         shell: pwsh
         run: Compress-Archive -Path target/release/rcamp.exe -DestinationPath rcamp-windows-x86_64.zip
