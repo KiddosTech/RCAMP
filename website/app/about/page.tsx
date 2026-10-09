@@ -1,0 +1,7 @@
+import { IconDeviceDesktopAnalytics, IconShieldLock, IconTopologyStar3 } from '@tabler/icons-react';
+
+export default function About() {
+  return <main className="page"><span className="eyebrow">ABOUT RCAMP</span><h2>Hardware, <em>on your terms.</em></h2><p className="page-lead">RCAMP is an open-source, local-first control plane built around one shared Rust core for GUI, Android, CLI, and embedded targets.</p><div className="feature-grid"><Feature icon={<IconDeviceDesktopAnalytics />} title="One shared core" text="Device management and transport logic live in Rust, not duplicated inside each interface." /><Feature icon={<IconShieldLock />} title="Private by default" text="No mandatory cloud account. Hardware traffic stays on your local network." /><Feature icon={<IconTopologyStar3 />} title="Capability-driven" text="Profiles describe what a device can do without assuming every board speaks the same protocol." /></div><section className="manifesto" id="settings"><span className="eyebrow">PROJECT VALUES</span><h3>Small surface. Serious control.</h3><p>RCAMP connects Wi-Fi, BLE, USB, serial, and future community transports behind clear APIs. The GUI, RCAMP/CLI, and RCAMP/RTOS remain separate experiences with one source of truth.</p></section></main>;
+}
+
+function Feature({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) { return <article className="feature-card"><div>{icon}</div><h3>{title}</h3><p>{text}</p></article>; }

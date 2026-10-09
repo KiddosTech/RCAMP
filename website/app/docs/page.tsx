@@ -1,0 +1,7 @@
+import { IconApi, IconBinaryTree, IconBroadcast, IconCpu, IconFileCode, IconPlayerPlay } from '@tabler/icons-react';
+
+export default function Docs() {
+  return <main className="page"><span className="eyebrow">DOCUMENTATION</span><h2>Understand the<br /><em>control plane.</em></h2><p className="page-lead">Start with profiles, connect a transport, then let the shared core expose safe capabilities to every interface.</p><div className="docs-grid"><Doc icon={<IconBinaryTree />} title="Architecture" text="GUI and CLI call rcamp-core; transports stay behind the device manager." /><Doc icon={<IconFileCode />} title="Device profiles" text="Describe name, type, address, capabilities, commands, controls, and metadata." /><Doc icon={<IconBroadcast />} title="Transports" text="Use TCP, UDP, HTTP, WebSocket, MQTT, BLE GATT, USB, and serial." /><Doc icon={<IconCpu />} title="RCAMP/RTOS" text="Reference ESP32 and Arduino targets with a line-oriented shell." /><Doc icon={<IconPlayerPlay />} title="ESP32 simulator" text="Trial shell commands and task capabilities before plugging in hardware." /><Doc icon={<IconApi />} title="Core API" text="Keep hardware input validated, local-first, and capability-driven." /></div></main>;
+}
+
+function Doc({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) { return <article className="doc-card"><div>{icon}</div><h3>{title}</h3><p>{text}</p></article>; }

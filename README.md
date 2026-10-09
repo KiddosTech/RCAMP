@@ -25,7 +25,7 @@ No RCAMP cloud account is required for basic operation. Your device can communic
 | **rcamp-core** | Shared device manager, profile validation, transport model, and flashing API |
 | **RCAMP/RTOS** | Reference ESP32 Wi-Fi/TCP and Arduino USB/Serial target firmware |
 
-The GUI also includes a structured **Logs** tab and an **RCAMP/RTOS Shell** tab. The shell is a safe simulated target console: it sends an allowlisted command set (`help`, `status`, `info`, `capabilities`, `ping`, `logs`, `whoami`, `rcampfetch`, `task`, and guarded `sudo`) over a direct, line-flushed TCP connection. It never executes a command on the host computer.
+The GUI also includes a structured **Logs** tab, an **RCAMP/RTOS Shell** tab, and an **ESP32 Simulation** tab. The simulator provides a virtual ESP32 target for trying `rcampfetch`, shell commands, telemetry-style status, and the task catalog before connecting physical hardware. The shell is a safe simulated target console: it sends an allowlisted command set (`help`, `status`, `info`, `capabilities`, `ping`, `logs`, `whoami`, `rcampfetch`, `task`, and guarded `sudo`) over a direct, line-flushed TCP connection. It never executes a command on the host computer.
 
 ## RCAMP/RTOS flashing
 
@@ -110,7 +110,7 @@ scripts/                 CLI installers
 
 ## Website
 
-The project website is a framework-free static site with Product, About, RCAMP/CLI, and Docs pages. Deploy `website/` with any static host such as Cloudflare Pages.
+The project website is a Next.js static-export site with Product, About, RCAMP/CLI, and Docs routes. Run `npm install` and `npm run build` inside `website/`, then deploy the generated `website/out/` directory to Cloudflare Pages or GitHub Pages.
 
 ## Contributing
 

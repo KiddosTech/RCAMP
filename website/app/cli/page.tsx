@@ -1,0 +1,7 @@
+import { IconBrandWindows, IconBrandUbuntu, IconCommand, IconDownload, IconKeyboard } from '@tabler/icons-react';
+
+export default function Cli() {
+  return <main className="page"><span className="eyebrow">RCAMP / CLI</span><h2>A control plane<br /><em>in your terminal.</em></h2><p className="page-lead">A keyboard-first TUI and command interface for Linux and Windows, powered by the same Rust core as RCAMP GUI.</p><div className="install-grid"><Install icon={<IconBrandWindows />} title="Windows PowerShell" command="irm https://raw.githubusercontent.com/KiddosTech/RCAMP/main/scripts/install.ps1 | iex" /><Install icon={<IconBrandUbuntu />} title="Linux / macOS" command="curl -fsSL https://raw.githubusercontent.com/KiddosTech/RCAMP/main/scripts/install.sh | sh" /></div><div className="command-showcase"><div><IconCommand size={20} /><span>COMMAND SURFACE</span></div><pre>rcamp devices list{`\n`}rcamp devices discover{`\n`}rcamp connect esp32-car{`\n`}rcamp logs{`\n`}rcamp doctor</pre><div className="cli-note"><IconKeyboard size={18} /><span>Run <code>rcamp</code> without arguments to open the interactive TUI.</span></div></div></main>;
+}
+
+function Install({ icon, title, command }: { icon: React.ReactNode; title: string; command: string }) { return <article className="install-card"><div className="install-title">{icon}<h3>{title}</h3></div><code>{command}</code><span className="muted">No Rust installation required for release artifacts.</span></article>; }

@@ -67,6 +67,11 @@ jobs:
       - run: npm run check
       - name: Initialize Android project
         run: npx tauri android init --ci
+      - name: Keep Tauri Android Gradle DSL compatible
+        run: |
+          if ! grep -qxF 'android.newDsl=false' src-tauri/gen/android/gradle.properties; then
+            printf '\nandroid.newDsl=false\n' >> src-tauri/gen/android/gradle.properties
+          fi
       - name: Configure Android release signing
         if: env.ANDROID_KEY_BASE64 != ''
         run: |
@@ -83,8 +88,8 @@ jobs:
           from pathlib import Path
           path = Path('app/build.gradle.kts')
           text = path.read_text()
-          if 'import java.io.FileInputStream' not in text:
-              text = 'import java.io.FileInputStream\nimport java.util.Properties\n\n' + text
+          lines = [line for line in text.splitlines() if line.strip() not in {'import java.io.FileInputStream', 'import java.util.Properties'}]
+          text = 'import java.io.FileInputStream\nimport java.util.Properties\n\n' + '\n'.join(lines) + '\n'
           signing = '''
               signingConfigs {
                   create("release") {
