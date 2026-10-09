@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
+    "website:build": "npm run build --prefix website",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "tauri": "tauri"
   },
