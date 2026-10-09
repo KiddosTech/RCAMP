@@ -2,7 +2,7 @@
 <h1 align="center">RCAMP</h1>
 <p align="center"><strong>One controller. Many devices. Local by default.</strong></p>
 <p align="center">Open-source hardware control for ESP32, Arduino, robots, RC cars, serial devices, and custom targets.</p>
-<p align="center"><a href="https://github.com/KiddosTech/RCAMP/releases"><img src="https://img.shields.io/github/v/release/KiddosTech/RCAMP?display_name=tag&style=flat-square&color=1768ee" alt="Latest release"></a> <a href="LICENSE"><img src="https://img.shields.io/github/license/KiddosTech/RCAMP?style=flat-square&color=8dffcf" alt="Apache-2.0 license"></a> <img src="https://img.shields.io/badge/platform-Linux%20%7C%20Windows%20%7C%20Android-101827?style=flat-square" alt="Platforms"> <img src="https://img.shields.io/badge/status-foundation-101827?style=flat-square" alt="Foundation status"></p>
+<p align="center"><a href="https://github.com/KiddosTech/RCAMP/releases"><img src="https://img.shields.io/badge/release-0.1.0-1768ee?style=flat-square" alt="RCAMP 0.1.0"></a> <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-8dffcf?style=flat-square" alt="Apache-2.0 license"></a> <img src="https://img.shields.io/badge/platform-Linux%20%7C%20Windows%20%7C%20Android-101827?style=flat-square" alt="Platforms"> <img src="https://img.shields.io/badge/status-foundation-101827?style=flat-square" alt="Foundation status"></p>
 
 RCAMP is a local-first control plane with a shared Rust core. The desktop GUI, Android app, and RCAMP/CLI speak through the same device model instead of duplicating hardware logic.
 
