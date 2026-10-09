@@ -8,15 +8,19 @@
   import IconLogs from '@tabler/icons-svelte/icons/logs';
   import IconPlugConnected from '@tabler/icons-svelte/icons/plug-connected';
   import IconRefresh from '@tabler/icons-svelte/icons/refresh';
+  import IconSearch from '@tabler/icons-svelte/icons/search';
   import IconSettings from '@tabler/icons-svelte/icons/settings';
   import IconTerminal2 from '@tabler/icons-svelte/icons/terminal-2';
   import IconTool from '@tabler/icons-svelte/icons/tool';
   import IconPlayerPlay from '@tabler/icons-svelte/icons/player-play';
   import IconPlayerStop from '@tabler/icons-svelte/icons/player-stop';
+  import IconUsb from '@tabler/icons-svelte/icons/usb';
+  import IconWifi from '@tabler/icons-svelte/icons/wifi';
 
-  type Tab = 'HQ' | 'Simulator' | 'Shell' | 'Logs' | 'Tools' | 'Settings' | 'Preferences' | 'Plugin' | 'About';
+  type Tab = 'HQ' | 'Connections' | 'Simulator' | 'Shell' | 'Logs' | 'Tools' | 'WiFi' | 'Settings' | 'Preferences' | 'Plugin' | 'About';
   type Device = { name: string; device_type: string; transport: string; address: string; state: string };
-  const tabs: Tab[] = ['HQ', 'Simulator', 'Shell', 'Logs', 'Tools', 'Settings', 'Preferences', 'Plugin', 'About'];
+  type SerialCandidate = { port: string; kind: string; identity: string; classification: string; safe_to_flash: boolean };
+  const tabs: Tab[] = ['HQ', 'Connections', 'Simulator', 'Shell', 'Logs', 'Tools', 'WiFi', 'Settings', 'Preferences', 'Plugin', 'About'];
   let activeTab: Tab = 'HQ';
   let devices: Device[] = [];
   let loading = false;
@@ -37,6 +41,14 @@
   let shellInput = 'help';
   let shellOutput = '';
   let shellBusy = false;
+  let serialCandidates: SerialCandidate[] = [];
+  let searchingSerial = false;
+  let searchMessage = '';
+  let wifiNetworks: string[] = [];
+  let selectedWifi = '';
+  let wifiPassword = '';
+  let wifiMessage = '';
+  let scanningWifi = false;
   let simulatorRunning = false;
   let simulatorCommand = 'rcampfetch';
   let simulatorOutput = 'ESP32 simulation is ready. Start the virtual target to begin.';
@@ -48,6 +60,26 @@
     try { devices = await invoke<Device[]>('list_devices'); }
     catch (reason) { error = `Unable to load devices: ${String(reason)}`; }
     finally { loading = false; }
+  }
+
+  async function searchSerialDevices() {
+    searchingSerial = true; searchMessage = '';
+    try {
+      serialCandidates = await invoke<SerialCandidate[]>('search_serial_devices');
+      searchMessage = serialCandidates.length ? `${serialCandidates.length} serial device(s) found. Unknown devices are blocked from flashing.` : 'No serial devices found. Connect an ESP32/Arduino USB cable and scan again.';
+    } catch (reason) { searchMessage = `Device search unavailable: ${String(reason)}`; }
+    finally { searchingSerial = false; }
+  }
+
+  function saveWifi() {
+    wifiMessage = selectedWifi && wifiPassword ? `Wi-Fi profile saved for ${selectedWifi}. The target must be connected to this network before RCAMP/RTOS discovery.` : 'Choose a network and enter its password first.';
+  }
+
+  async function scanWifi() {
+    scanningWifi = true; wifiMessage = '';
+    try { wifiNetworks = await invoke<string[]>('scan_wifi_networks'); wifiMessage = wifiNetworks.length ? `${wifiNetworks.length} network(s) found.` : 'No Wi-Fi networks found.'; }
+    catch (reason) { wifiMessage = `Wi-Fi scan unavailable: ${String(reason)}`; }
+    finally { scanningWifi = false; }
   }
 
   async function addDevice() {
@@ -62,6 +94,15 @@
   async function flashFirmware() {
     flashing = true; flashMessage = '';
     try {
+      if (!flashPort.trim()) {
+        const candidates = await invoke<SerialCandidate[]>('search_serial_devices');
+        const safe = candidates.filter((candidate) => candidate.safe_to_flash);
+        if (safe.length === 1) flashPort = safe[0].port;
+        else {
+          flashMessage = safe.length ? 'Multiple supported targets found. Select a port from Connections before flashing.' : 'No verified ESP32/Arduino target found. Scan Connections first; unknown USB devices are blocked.';
+          return;
+        }
+      }
       flashMessage = await invoke<string>('flash_target', { target: flashTarget, port: flashPort, firmware: firmwarePath });
     } catch (reason) { flashMessage = String(reason); }
     finally { flashing = false; }
@@ -110,12 +151,14 @@
 
 <main class:light={!darkMode}>
   <header class="topbar"><div class="brand"><img class="brand-mark" src="/rcamp-mark.svg" alt="RCAMP" /><div><p class="eyebrow">LOCAL-FIRST HARDWARE CONTROL</p><h1>RCAMP</h1></div></div><div class="top-status"><span class="pulse"></span><span>Core online</span><button class="icon-button" onclick={refresh} disabled={loading} aria-label="Refresh devices"><IconRefresh size={17} stroke={1.8} class={loading ? 'spin' : ''} /></button></div></header>
-  <nav class="tabs" aria-label="Application sections">{#each tabs as tab}<button class:active={activeTab === tab} onclick={() => { activeTab = tab; if (tab === 'Logs') void loadLogs(); }}>{#if tab === 'HQ'}<IconHome2 size={16} stroke={1.8} />{:else if tab === 'Simulator'}<IconCpu size={16} stroke={1.8} />{:else if tab === 'Shell'}<IconTerminal2 size={16} stroke={1.8} />{:else if tab === 'Logs'}<IconLogs size={16} stroke={1.8} />{:else if tab === 'Tools'}<IconTool size={16} stroke={1.8} />{:else if tab === 'Plugin'}<IconPlugConnected size={16} stroke={1.8} />{:else if tab === 'About'}<IconInfoCircle size={16} stroke={1.8} />{:else if tab === 'Settings'}<IconSettings size={16} stroke={1.8} />{:else}<IconAdjustments size={16} stroke={1.8} />{/if}<span>{tab}</span></button>{/each}</nav>
+  <nav class="tabs" aria-label="Application sections">{#each tabs as tab}<button class:active={activeTab === tab} onclick={() => { activeTab = tab; if (tab === 'Logs') void loadLogs(); }}>{#if tab === 'HQ'}<IconHome2 size={16} stroke={1.8} />{:else if tab === 'Connections'}<IconSearch size={16} stroke={1.8} />{:else if tab === 'Simulator'}<IconCpu size={16} stroke={1.8} />{:else if tab === 'Shell'}<IconTerminal2 size={16} stroke={1.8} />{:else if tab === 'Logs'}<IconLogs size={16} stroke={1.8} />{:else if tab === 'Tools'}<IconTool size={16} stroke={1.8} />{:else if tab === 'WiFi'}<IconWifi size={16} stroke={1.8} />{:else if tab === 'Plugin'}<IconPlugConnected size={16} stroke={1.8} />{:else if tab === 'About'}<IconInfoCircle size={16} stroke={1.8} />{:else if tab === 'Settings'}<IconSettings size={16} stroke={1.8} />{:else}<IconAdjustments size={16} stroke={1.8} />{/if}<span>{tab}</span></button>{/each}</nav>
 
   {#if activeTab === 'HQ'}
     <section class="intro"><p class="eyebrow">COMMAND CENTER / 01</p><h2>One controller.<br><em>Many devices.</em></h2><p>Observe, connect, and control your local hardware from one focused workspace.</p></section>
     <form class="add-device" onsubmit={(event) => { event.preventDefault(); void addDevice(); }}><div><label for="device-name">Device name</label><input id="device-name" bind:value={name} required placeholder="ESP32 RC Car" /></div><div><label for="device-address">Network address</label><input id="device-address" bind:value={address} required placeholder="192.168.1.42:80" /></div><button class="primary" disabled={adding}>{adding ? 'Adding…' : 'Add device'}</button></form>
     <section class="devices" aria-label="Devices"><div class="section-title"><div><p class="eyebrow">FLEET</p><h3>Registered devices</h3></div><span>{devices.length} total</span></div>{#if error}<p class="error" role="alert">{error}</p>{:else if devices.length === 0}<div class="empty"><div class="empty-icon">＋</div><h3>No devices connected</h3><p>Add a profile above to begin your local control session.</p></div>{:else}<ul>{#each devices as device}<li><div class="device-icon">⌁</div><div class="device-copy"><strong>{device.name}</strong><span>{device.device_type} · {device.transport}</span></div><div class="status"><span>{device.state}</span><small>{device.address}</small></div></li>{/each}</ul>{/if}</section>
+  {:else if activeTab === 'Connections'}
+    <section class="panel search-panel"><p class="eyebrow">ADD CONNECTIONS / 02</p><h2>Find RCAMP/RTOS targets.</h2><p class="panel-lead">Scan supported serial transports and discover nearby target profiles. RCAMP identifies known ESP32/Arduino adapters before allowing firmware actions; unknown USB devices are never flashed.</p><div class="search-actions"><button class="primary" onclick={() => void searchSerialDevices()} disabled={searchingSerial}><IconSearch size={17} stroke={1.8} />{searchingSerial ? 'Scanning…' : 'Search USB / Serial devices'}</button><span><IconUsb size={16} stroke={1.8} /> Physical device scan</span></div>{#if searchMessage}<p class="hint">{searchMessage}</p>{/if}<div class="candidate-list">{#if serialCandidates.length === 0}<div class="empty"><IconUsb size={24} stroke={1.8} /><h3>No scan results</h3><p>Connect an ESP32 or Arduino USB cable, then scan. Bluetooth and RCAMP/RTOS Wi-Fi discovery are available from their respective connection profiles.</p></div>{:else}{#each serialCandidates as candidate}<div class="candidate"><div class="candidate-icon"><IconUsb size={18} stroke={1.8} /></div><div><strong>{candidate.port}</strong><span>{candidate.identity} · {candidate.kind}</span></div><div class:approved={candidate.safe_to_flash} class="candidate-status">{candidate.classification}</div></div>{/each}{/if}</div></section>
   {:else if activeTab === 'Simulator'}
     <section class="panel simulator-panel"><div class="simulator-heading"><div><p class="eyebrow">ESP32 SIMULATION / 02</p><h2>Trial RCAMP/RTOS safely.</h2><p class="panel-lead">Run a virtual ESP32 target without hardware, serial drivers, Wi-Fi, or flashing. Test the shell, task catalog, telemetry flow, and UI before connecting a real board.</p></div><div class="simulator-chip"><IconDeviceDesktopAnalytics size={18} stroke={1.8} /><span>{simulatorRunning ? 'Virtual target online' : 'Stopped'}</span></div></div><div class="simulator-card"><div class="simulator-toolbar"><div><strong>ESP32 DevKit</strong><span>RCAMP/RTOS 0.1.0 · virtual-tcp</span></div><button class={simulatorRunning ? 'danger' : 'primary'} onclick={toggleSimulator}>{#if simulatorRunning}<IconPlayerStop size={16} stroke={1.8} />Stop simulation{:else}<IconPlayerPlay size={16} stroke={1.8} />Start simulation{/if}</button></div><div class="simulator-command"><label for="sim-command">Virtual shell command<input id="sim-command" bind:value={simulatorCommand} onkeydown={(event) => { if (event.key === 'Enter') runSimulation(); }} placeholder="rcampfetch or task rgb_on" /></label><button class="primary" onclick={runSimulation} disabled={!simulatorRunning}>Run</button></div><pre class="terminal-output">{simulatorOutput}</pre><div class="simulator-footer"><div><span class="eyebrow">TASK CATALOG</span><div class="task-chips">{#each simulatorTasks as task}<code>{task}</code>{/each}</div></div><div class="simulator-log"><span class="eyebrow">SIMULATION LOG</span>{#if simulatorLogs.length === 0}<small>No virtual events yet.</small>{:else}{#each simulatorLogs.slice(-4) as item}<small>{item}</small>{/each}{/if}</div></div></div></section>
   {:else if activeTab === 'Shell'}
@@ -124,6 +167,8 @@
     <section class="panel"><p class="eyebrow">SYSTEM LOG / 03</p><h2>Event stream.</h2><p class="panel-lead">Structured local events from device registration, shell traffic, flashing, and connection errors.</p><div class="log-list">{#if logs.length === 0}<div class="empty"><h3>No events yet</h3><p>Actions from the app and target will appear here.</p></div>{:else}{#each logs as entry}<div class="log-entry"><span class="log-level {entry.level}">{entry.level}</span><span>{entry.message}</span><time>{new Date(entry.timestamp * 1000).toLocaleTimeString()}</time></div>{/each}{/if}</div></section>
   {:else if activeTab === 'Tools'}
     <section class="panel"><p class="eyebrow">TARGET TOOLS / 02</p><h2>Flash RCAMP/RTOS.</h2><p class="panel-lead">Install the RCAMP/RTOS firmware on an ESP32 or Arduino target. RCAMP calls the native vendor flasher locally—no firmware or device data is uploaded.</p><div class="flash-form"><label for="flash-target">Target<select id="flash-target" bind:value={flashTarget}><option value="esp32">ESP32 · esptool</option><option value="arduino">Arduino · avrdude</option></select></label><label for="flash-port">Serial port<input id="flash-port" bind:value={flashPort} required placeholder="COM3 or /dev/ttyUSB0" /></label><label for="firmware-path">Firmware file<input id="firmware-path" bind:value={firmwarePath} required placeholder="C:\\firmware\\rcamp-rtos.bin" /></label><button class="primary" onclick={() => void flashFirmware()} disabled={flashing}>{flashing ? 'Flashing…' : 'Flash target'}</button></div>{#if flashMessage}<pre class="flash-output">{flashMessage}</pre>{/if}<div class="tool-note"><strong>Required tools</strong><span>ESP32: <code>esptool</code> · Arduino: <code>avrdude</code> available on PATH</span></div></section>
+  {:else if activeTab === 'WiFi'}
+    <section class="panel wifi-panel"><p class="eyebrow">WIFI EDITOR / 03</p><h2>Connect the target network.</h2><p class="panel-lead">Scan nearby networks, choose one, and save credentials for RCAMP/RTOS discovery. Credentials stay local to this session and are never written to logs.</p><div class="wifi-form"><button class="secondary" onclick={() => void scanWifi()} disabled={scanningWifi}><IconSearch size={17} stroke={1.8} />{scanningWifi ? 'Scanning Wi-Fi…' : 'Find available Wi-Fi'}</button><label for="wifi-network">Available Wi-Fi<select id="wifi-network" bind:value={selectedWifi}><option value="">Select a network</option>{#each wifiNetworks as network}<option value={network}>{network}</option>{/each}</select></label><label for="wifi-password">Password<input id="wifi-password" type="password" bind:value={wifiPassword} autocomplete="off" placeholder="Wi-Fi password" /></label><button class="primary" onclick={saveWifi}><IconWifi size={17} stroke={1.8} />Save Wi-Fi profile</button></div>{#if wifiMessage}<p class="hint">{wifiMessage}</p>{/if}<div class="wifi-note"><IconWifi size={20} stroke={1.8} /><div><strong>Discovery sequence</strong><span>Connect the computer to Wi-Fi first, then scan for RCAMP/RTOS targets. The native adapter uses Windows netsh or Linux nmcli; Android integration will use a mobile Wi-Fi plugin.</span></div></div></section>
   {:else if activeTab === 'Settings'}
     <section class="panel"><p class="eyebrow">SYSTEM / 02</p><h2>Settings</h2><p class="panel-lead">Configure the RCAMP runtime and local data boundaries.</p><div class="setting-row"><div><strong>Core runtime</strong><span>Shared Rust device manager</span></div><b class="badge good">Online</b></div><div class="setting-row"><div><strong>Profile storage</strong><span>Session storage · durable profiles coming next</span></div><b class="badge">Session</b></div><div class="setting-row"><div><strong>Log level</strong><span>Structured logs from the core</span></div><select aria-label="Log level"><option>Info</option><option>Debug</option><option>Trace</option></select></div></section>
   {:else if activeTab === 'Preferences'}

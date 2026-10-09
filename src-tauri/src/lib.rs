@@ -8,6 +8,15 @@ struct AppState { devices: Mutex<DeviceManager>, logs: Mutex<Vec<LogEntry>> }
 #[derive(Serialize, Clone)]
 struct LogEntry { timestamp: u64, level: String, message: String }
 
+#[derive(Serialize)]
+struct SerialCandidate {
+    port: String,
+    kind: String,
+    identity: String,
+    classification: String,
+    safe_to_flash: bool,
+}
+
 fn record_log(state: &AppState, level: &str, message: impl Into<String>) {
     if let Ok(mut logs) = state.logs.lock() {
         logs.push(LogEntry { timestamp: std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |duration| duration.as_secs()), level: level.into(), message: message.into() });
@@ -64,6 +73,68 @@ fn list_logs(state: State<'_, AppState>) -> Result<Vec<LogEntry>, String> {
 }
 
 #[tauri::command]
+fn search_serial_devices() -> Result<Vec<SerialCandidate>, String> {
+    #[cfg(target_os = "android")]
+    { return Ok(Vec::new()); }
+
+    #[cfg(not(target_os = "android"))]
+    {
+        let ports = serialport::available_ports().map_err(|error| error.to_string())?;
+        Ok(ports.into_iter().map(|port| {
+            let (kind, identity) = match port.port_type {
+                serialport::SerialPortType::UsbPort(info) => {
+                    let identity = [info.manufacturer, info.product, info.serial_number]
+                        .into_iter().flatten().collect::<Vec<_>>().join(" ");
+                    ("usb-serial".to_string(), if identity.is_empty() { format!("USB {:04x}:{:04x}", info.vid, info.pid) } else { identity })
+                }
+                serialport::SerialPortType::BluetoothPort => ("bluetooth-serial".to_string(), "Bluetooth serial adapter".to_string()),
+                serialport::SerialPortType::PciPort => ("pci-serial".to_string(), "PCI serial adapter".to_string()),
+                serialport::SerialPortType::Unknown => ("unknown".to_string(), "Unidentified serial device".to_string()),
+            };
+            let searchable = format!("{} {}", kind, identity).to_ascii_lowercase();
+            let (classification, safe_to_flash) = if searchable.contains("esp32") || searchable.contains("espressif") {
+                ("ESP32".to_string(), true)
+            } else if searchable.contains("arduino") || searchable.contains("atmega") {
+                ("Arduino-compatible".to_string(), true)
+            } else if searchable.contains("ch340") || searchable.contains("ftdi") || searchable.contains("cp210") {
+                ("USB serial adapter — verify target".to_string(), false)
+            } else {
+                ("Unknown — do not flash".to_string(), false)
+            };
+            SerialCandidate { port: port.port_name, kind, identity, classification, safe_to_flash }
+        }).collect())
+    }
+}
+
+#[tauri::command]
+fn scan_wifi_networks() -> Result<Vec<String>, String> {
+    #[cfg(target_os = "android")]
+    { return Ok(Vec::new()); }
+
+    #[cfg(not(target_os = "android"))]
+    {
+        #[cfg(target_os = "windows")]
+        let output = std::process::Command::new("netsh").args(["wlan", "show", "networks", "mode=bssid"]).output();
+        #[cfg(all(unix, not(target_os = "android")))]
+        let output = std::process::Command::new("nmcli").args(["-t", "-f", "SSID", "dev", "wifi", "list"]).output();
+        #[cfg(not(any(target_os = "windows", all(unix, not(target_os = "android")))))]
+        { return Err("Wi-Fi scanning is not available on this platform yet".into()); }
+
+        let output = output.map_err(|error| format!("Wi-Fi scanner unavailable: {error}"))?;
+        if !output.status.success() { return Err("Wi-Fi scan command failed; ensure Wi-Fi is enabled".into()); }
+        let text = String::from_utf8_lossy(&output.stdout);
+        let mut networks = Vec::new();
+        for line in text.lines() {
+            let candidate = if cfg!(target_os = "windows") {
+                line.trim().strip_prefix("SSID ").and_then(|value| value.split_once(':').map(|(_, name)| name.trim().to_string()))
+            } else { Some(line.trim().replace("\\:", ":")) };
+            if let Some(name) = candidate.filter(|name| !name.is_empty() && !networks.contains(name)) { networks.push(name); }
+        }
+        Ok(networks)
+    }
+}
+
+#[tauri::command]
 fn shell_command(address: String, command: String, state: State<'_, AppState>) -> Result<String, String> {
     record_log(&state, "info", format!("shell command sent to {address}: {command}"));
     match execute_shell(&address, &command) {
@@ -94,7 +165,7 @@ pub fn run() {
     tracing_subscriber::fmt::init();
     tauri::Builder::default()
         .manage(AppState { devices: Mutex::new(DeviceManager::new()), logs: Mutex::new(Vec::new()) })
-        .invoke_handler(tauri::generate_handler![list_devices, add_device, flash_target, list_logs, shell_command])
+        .invoke_handler(tauri::generate_handler![list_devices, add_device, flash_target, list_logs, search_serial_devices, scan_wifi_networks, shell_command])
         .run(tauri::generate_context!())
         .expect("error while running RCAMP");
 }
