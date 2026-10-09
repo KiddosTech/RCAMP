@@ -1,5 +1,14 @@
 <script lang="ts">
   import { invoke } from '@tauri-apps/api/core';
+  import IconAdjustments from '@tabler/icons-svelte/icons/adjustments';
+  import IconHome2 from '@tabler/icons-svelte/icons/home-2';
+  import IconInfoCircle from '@tabler/icons-svelte/icons/info-circle';
+  import IconLogs from '@tabler/icons-svelte/icons/logs';
+  import IconPlugConnected from '@tabler/icons-svelte/icons/plug-connected';
+  import IconRefresh from '@tabler/icons-svelte/icons/refresh';
+  import IconSettings from '@tabler/icons-svelte/icons/settings';
+  import IconTerminal2 from '@tabler/icons-svelte/icons/terminal-2';
+  import IconTool from '@tabler/icons-svelte/icons/tool';
 
   type Tab = 'HQ' | 'Shell' | 'Logs' | 'Tools' | 'Settings' | 'Preferences' | 'Plugin' | 'About';
   type Device = { name: string; device_type: string; transport: string; address: string; state: string };
@@ -62,8 +71,8 @@
 </script>
 
 <main class:light={!darkMode}>
-  <header class="topbar"><div class="brand"><div class="brand-mark">R</div><div><p class="eyebrow">LOCAL-FIRST HARDWARE CONTROL</p><h1>RCAMP</h1></div></div><div class="top-status"><span class="pulse"></span><span>Core online</span><button onclick={refresh} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh'}</button></div></header>
-  <nav class="tabs" aria-label="Application sections">{#each tabs as tab}<button class:active={activeTab === tab} onclick={() => { activeTab = tab; if (tab === 'Logs') void loadLogs(); }}>{tab === 'HQ' ? '⌂' : tab === 'Shell' ? '›_' : tab === 'Logs' ? '≋' : tab === 'Tools' ? '⚡' : tab === 'Plugin' ? '◈' : tab === 'About' ? 'ⓘ' : tab === 'Settings' ? '⚙' : '◌'} <span>{tab}</span></button>{/each}</nav>
+  <header class="topbar"><div class="brand"><img class="brand-mark" src="/rcamp-mark.svg" alt="RCAMP" /><div><p class="eyebrow">LOCAL-FIRST HARDWARE CONTROL</p><h1>RCAMP</h1></div></div><div class="top-status"><span class="pulse"></span><span>Core online</span><button class="icon-button" onclick={refresh} disabled={loading} aria-label="Refresh devices"><IconRefresh size={17} stroke={1.8} class={loading ? 'spin' : ''} /></button></div></header>
+  <nav class="tabs" aria-label="Application sections">{#each tabs as tab}<button class:active={activeTab === tab} onclick={() => { activeTab = tab; if (tab === 'Logs') void loadLogs(); }}>{#if tab === 'HQ'}<IconHome2 size={16} stroke={1.8} />{:else if tab === 'Shell'}<IconTerminal2 size={16} stroke={1.8} />{:else if tab === 'Logs'}<IconLogs size={16} stroke={1.8} />{:else if tab === 'Tools'}<IconTool size={16} stroke={1.8} />{:else if tab === 'Plugin'}<IconPlugConnected size={16} stroke={1.8} />{:else if tab === 'About'}<IconInfoCircle size={16} stroke={1.8} />{:else if tab === 'Settings'}<IconSettings size={16} stroke={1.8} />{:else}<IconAdjustments size={16} stroke={1.8} />{/if}<span>{tab}</span></button>{/each}</nav>
 
   {#if activeTab === 'HQ'}
     <section class="intro"><p class="eyebrow">COMMAND CENTER / 01</p><h2>One controller.<br><em>Many devices.</em></h2><p>Observe, connect, and control your local hardware from one focused workspace.</p></section>
@@ -82,6 +91,6 @@
   {:else if activeTab === 'Plugin'}
     <section class="panel"><p class="eyebrow">EXTENSIONS / 04</p><h2>Plugins</h2><p class="panel-lead">Extend RCAMP without coupling hardware logic to the interface.</p><div class="plugin-card"><div class="plugin-icon">⌘</div><div><strong>Transport adapters</strong><p>TCP, serial, BLE GATT, and future community transports.</p></div><span class="badge">Core</span></div><div class="plugin-card muted"><div class="plugin-icon">＋</div><div><strong>Community plugins</strong><p>Plugin discovery will arrive with the profile registry.</p></div><span class="badge">Soon</span></div></section>
   {:else}
-    <section class="panel about"><div class="about-mark">R</div><p class="eyebrow">RCAMP / 05</p><h2>Hardware, on your terms.</h2><p class="panel-lead">RCAMP is open-source, local-first, and built around one shared Rust core for GUI, Android, and CLI.</p><div class="version">RCAMP <strong>v0.1.0</strong><span>Apache-2.0</span></div></section>
+    <section class="panel about"><img class="about-mark" src="/rcamp-mark.svg" alt="RCAMP logo" /><p class="eyebrow">RCAMP / 05</p><h2>Hardware, on your terms.</h2><p class="panel-lead">RCAMP is open-source, local-first, and built around one shared Rust core for GUI, Android, and CLI.</p><div class="version">RCAMP <strong>v0.1.0</strong><span>Apache-2.0</span></div></section>
   {/if}
 </main>

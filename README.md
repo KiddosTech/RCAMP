@@ -25,7 +25,7 @@ No RCAMP cloud account is required for basic operation. Your device can communic
 | **rcamp-core** | Shared device manager, profile validation, transport model, and flashing API |
 | **RCAMP/RTOS** | Reference ESP32 Wi-Fi/TCP and Arduino USB/Serial target firmware |
 
-The GUI also includes a structured **Logs** tab and an **RCAMP/RTOS Shell** tab. The shell is a safe simulated target console: it sends only `help`, `status`, `info`, `capabilities`, `ping`, and `logs` over a direct, line-flushed TCP connection. It never executes a command on the host computer.
+The GUI also includes a structured **Logs** tab and an **RCAMP/RTOS Shell** tab. The shell is a safe simulated target console: it sends an allowlisted command set (`help`, `status`, `info`, `capabilities`, `ping`, `logs`, `whoami`, `rcampfetch`, `task`, and guarded `sudo`) over a direct, line-flushed TCP connection. It never executes a command on the host computer.
 
 ## RCAMP/RTOS flashing
 
