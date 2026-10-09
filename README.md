@@ -1,158 +1,83 @@
-# RCAMP
+<p align="center"><img src="assets/rcamp-mark.svg" width="128" alt="RCAMP logo"></p>
+<h1 align="center">RCAMP</h1>
+<p align="center"><strong>One controller. Many devices. Local by default.</strong></p>
+<p align="center">Open-source hardware control for ESP32, Arduino, robots, RC cars, serial devices, and custom targets.</p>
+<p align="center"><a href="https://github.com/KiddosTech/RCAMP/releases"><img src="https://img.shields.io/github/v/release/KiddosTech/RCAMP?display_name=tag&style=flat-square&color=1768ee" alt="Latest release"></a> <a href="LICENSE"><img src="https://img.shields.io/github/license/KiddosTech/RCAMP?style=flat-square&color=8dffcf" alt="Apache-2.0 license"></a> <img src="https://img.shields.io/badge/platform-Linux%20%7C%20Windows%20%7C%20Android-101827?style=flat-square" alt="Platforms"> <img src="https://img.shields.io/badge/status-foundation-101827?style=flat-square" alt="Foundation status"></p>
 
-<p align="center"><img src="assets/rcamp-mark.svg" width="112" alt="RCAMP logo"></p>
-
-> **One controller. Many devices. Local by default.**
-
-RCAMP is an open-source, local-first platform for managing and controlling hardware: ESP32 projects, Arduino boards, robots, RC cars, projectors, serial devices, and custom equipment.
-
-There is no required cloud account and no RCAMP server in the control path.
+RCAMP is a local-first control plane with a shared Rust core. The desktop GUI, Android app, and RCAMP/CLI speak through the same device model instead of duplicating hardware logic.
 
 ```text
-Your device  ── Wi-Fi / Bluetooth / USB ──  RCAMP
+              ┌── RCAMP GUI ───── Linux · Windows · Android
+              │
+rcamp-core ───┼── RCAMP/CLI ───── Linux · Windows
+              │
+              └── RCAMP/RTOS ──── ESP32 · Arduino · targets
 ```
 
-Built with Rust, Tauri 2, Svelte, and TypeScript. Licensed under [Apache-2.0](LICENSE).
+No RCAMP cloud account is required for basic operation. Your device can communicate with your computer over Wi-Fi, Bluetooth, USB, or serial.
 
-## Two interfaces, one core
+## Product surface
 
-```text
-                 ┌─ RCAMP GUI ───── Linux · Windows · Android
-                 │
-rcamp-core ──────┼─ RCAMP/CLI ───── Linux · Windows
-                 │
-                 └─ Device profiles · transports · device state
-```
-
-The GUI and CLI use the same Rust core. Hardware communication belongs in the core—not in the Svelte frontend or a separate CLI implementation.
-
-## What is included
-
-| Area | Included now |
+| Surface | Purpose |
 | --- | --- |
-| GUI | A dark, touch-friendly Tauri/Svelte device workspace and local session profile creation |
-| CLI | `rcamp` command interface and keyboard-first TUI shell |
-| Core | Device model, profile validation, device manager, transport model |
-| CI | Linux AppImage, Windows MSI, Android APK/AAB, and standalone CLI artifacts |
-| Security | Input validation boundaries, no committed signing material, no cloud requirement |
+| **RCAMP GUI** | Tauri 2 + Svelte workspace with HQ, Tools, Settings, Preferences, Plugin, and About tabs |
+| **RCAMP/CLI** | Rust command interface and keyboard-first TUI for Linux and Windows |
+| **rcamp-core** | Shared device manager, profile validation, transport model, and flashing API |
+| **RCAMP/RTOS** | Reference ESP32 Wi-Fi/TCP and Arduino USB/Serial target firmware |
 
-## Transport model
+The GUI also includes a structured **Logs** tab and an **RCAMP/RTOS Shell** tab. The shell is a safe simulated target console: it sends only `help`, `status`, `info`, `capabilities`, `ping`, and `logs` over a direct, line-flushed TCP connection. It never executes a command on the host computer.
 
-RCAMP treats a transport as a capability of a device profile, not as an assumption about every device.
+## RCAMP/RTOS flashing
 
-| Family | Modelled transports |
-| --- | --- |
-| Network | TCP, UDP, HTTP, WebSocket, MQTT |
-| USB | Serial and USB-to-serial |
-| Bluetooth | BLE GATT |
-
-Transport adapters and discovery integrations are added incrementally. The current foundation models them without pretending every adapter is already implemented.
-
-## Quick start
-
-## Website
-
-The project landing page is in [`website/`](website/). Enable **Settings → Pages → Source: GitHub Actions** in your GitHub repository; pushes to `main` then deploy it through the **Deploy website** workflow.
-
-### Build from GitHub Actions — no Rust installation needed
-
-1. Create a GitHub repository and push this project.
-2. Open the repository’s **Actions** tab.
-3. Select **Build RCAMP** and run it, or push a commit.
-4. Download the artifacts from the completed run.
-
-The workflow installs Node.js, Rust, Java, Android SDK, Android NDK, and platform dependencies on GitHub-hosted runners. Your computer does not need Rust installed.
-
-Artifacts produced by the workflow:
-
-```text
-RCAMP-linux-appimage     Linux GUI AppImage
-RCAMP-windows-msi        Windows GUI installer
-RCAMP-android-apk        Installable Android APK
-RCAMP-android-aab        Android App Bundle for distribution
-RCAMP-cli-linux          RCAMP/CLI Linux archive
-RCAMP-cli-windows        RCAMP/CLI Windows archive
-```
-
-### Local development
-
-For local GUI/CLI development, install a current Rust toolchain and Node.js, then run:
+The GUI Tools tab and CLI can flash target firmware using native vendor tools. RCAMP never evaluates a device-supplied shell command; it invokes a fixed tool with validated arguments. The Shell and Logs tabs provide realtime target interaction and structured events. `rcamp rcampfetch <address>` reports host and target details.
 
 ```sh
-npm install
-npm run check
-cargo fmt --check
-cargo test -p rcamp-core -p rcamp-cli
-npm run tauri dev
+rcamp target flash --target esp32 --port COM3 --firmware rcamp-rtos.bin
+rcamp target flash --target arduino --port COM4 --firmware rcamp-rtos.hex
 ```
 
-Open the terminal interface with:
+Install `esptool` for ESP32 or `avrdude` for Arduino, then see [`rcamp-rtos/README.md`](rcamp-rtos/README.md) for firmware sketches and the target line protocol.
 
-```sh
-cargo run -p rcamp-cli --
-```
+## Install RCAMP/CLI
 
-Useful CLI commands currently available:
+The release installers download signed-by-release artifacts and do not require a local Rust installation.
 
-```sh
-rcamp devices list
-rcamp devices discover
-rcamp devices info <device>
-rcamp doctor
-rcamp version
-```
-
-### Install RCAMP/CLI from a release
-
-After a `v*` tag is published, GitHub Actions creates release assets for Linux and Windows. Install without Rust:
+Windows PowerShell:
 
 ```powershell
 irm https://raw.githubusercontent.com/KiddosTech/RCAMP/main/scripts/install.ps1 | iex
 ```
 
+Linux or macOS:
+
 ```sh
 curl -fsSL https://raw.githubusercontent.com/KiddosTech/RCAMP/main/scripts/install.sh | sh
-# or
-wget -qO- https://raw.githubusercontent.com/KiddosTech/RCAMP/main/scripts/install.sh | sh
+# or: wget -qO- https://raw.githubusercontent.com/KiddosTech/RCAMP/main/scripts/install.sh | sh
 ```
-
-For a pinned release, set `RCAMP_VERSION` before running the script (for example `v0.1.0`).
 
 ## Device profiles
 
-Profiles describe a device; they do not execute arbitrary code or assume a common protocol.
+Profiles describe capability without assuming that all hardware shares one protocol:
 
 ```json
 {
   "name": "Workshop RC Car",
   "type": "rc-car",
   "connection": "tcp",
-  "address": "192.168.1.42:80",
+  "address": "192.168.1.42:8080",
   "capabilities": ["drive", "light", "telemetry"],
-  "controls": {
-    "motor_left": "motor_left",
-    "motor_right": "motor_right"
-  }
+  "controls": { "motor_left": "motor_left", "motor_right": "motor_right" }
 }
 ```
 
-The initial GUI can create a TCP profile for the active session. Durable local profile storage, discovery adapters, and transport connections are the next milestones.
+Modelled transports include TCP, UDP, HTTP, WebSocket, MQTT, serial, USB-to-serial, and BLE GATT. Adapters are capability-driven and treat network, Bluetooth, serial, and profile input as untrusted.
 
-## Repository layout
+## Development
 
-```text
-.
-├── crates/
-│   ├── rcamp-core/       Shared device, profile, and transport abstractions
-│   └── rcamp-cli/        RCAMP/CLI command interface and TUI
-├── src/                  Svelte + TypeScript frontend
-├── src-tauri/            Tauri application and GUI-to-core commands
-└── .github/workflows/    Linux, Windows, Android, and CLI builds
-```
-
-## Development checks
+Install Node.js and a current Rust toolchain:
 
 ```sh
+npm install
 npm run check
 npm run build
 cargo fmt --check
@@ -160,28 +85,32 @@ cargo test -p rcamp-core -p rcamp-cli
 cargo clippy --workspace --all-targets -- -D warnings
 ```
 
-Hardware is not required for automated tests. Device/network/serial/Bluetooth input must always be treated as untrusted.
+Start the GUI or CLI locally:
 
-## Android signing
-
-Signing keys never belong in the repository. For release signing, store them only as GitHub Actions secrets:
-
-```text
-ANDROID_KEY_BASE64
-ANDROID_KEY_ALIAS
-ANDROID_KEY_PASSWORD
-ANDROID_STORE_PASSWORD
+```sh
+npm run tauri dev
+cargo run -p rcamp-cli --
 ```
 
-The default CI build is suitable for development and artifact testing. Configure release signing before publishing to an app store.
+## Repository map
 
-## Status and direction
+```text
+crates/rcamp-core/       Shared Rust device, profile, transport, and flashing logic
+crates/rcamp-cli/        RCAMP/CLI parser and TUI
+src/                     Svelte + TypeScript GUI
+src-tauri/               Tauri desktop/mobile host and commands
+rcamp-rtos/              ESP32 and Arduino reference firmware
+website/                 Multi-page project website
+scripts/                 CLI installers
+```
 
-RCAMP is at the foundation stage. The project has a real cross-platform shell, shared core, CLI/TUI, and CI packaging pipeline. Next work focuses on persistent profiles, TCP/serial adapters, discovery, connection lifecycle, and capability-driven controls.
+## Website
 
-## Contributing and security
+The project website is a framework-free static site with Product, About, RCAMP/CLI, and Docs pages. Deploy `website/` with any static host such as Cloudflare Pages.
 
-Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), and report vulnerabilities according to [SECURITY.md](SECURITY.md).
+## Contributing
+
+Keep hardware access inside `rcamp-core`; avoid implementing a second transport stack in the GUI or CLI. Read [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md) before opening a change.
 
 ## License
 
