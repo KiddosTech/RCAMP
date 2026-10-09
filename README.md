@@ -85,6 +85,10 @@ cargo test -p rcamp-core -p rcamp-cli
 cargo clippy --workspace --all-targets -- -D warnings
 ```
 
+### Android release signing
+
+Pull-request and development builds may use Android's debug signing. Tagged release builds require these GitHub Actions secrets: `ANDROID_KEY_BASE64`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`, and `ANDROID_STORE_PASSWORD`. The workflow creates the keystore file only on the runner; no `.jks`, `keystore.properties`, or private credential is stored in the repository.
+
 Start the GUI or CLI locally:
 
 ```sh

@@ -11,7 +11,8 @@ struct LogEntry { timestamp: u64, level: String, message: String }
 fn record_log(state: &AppState, level: &str, message: impl Into<String>) {
     if let Ok(mut logs) = state.logs.lock() {
         logs.push(LogEntry { timestamp: std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |duration| duration.as_secs()), level: level.into(), message: message.into() });
-        if logs.len() > 500 { let _ = logs.drain(..logs.len() - 500); }
+        let excess = logs.len().saturating_sub(500);
+        if excess > 0 { let _ = logs.drain(..excess); }
     }
 }
 
