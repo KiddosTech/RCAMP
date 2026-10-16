@@ -1,3 +1,5 @@
+# RCAMP
+
 <p align="center"><img src="assets/rcamp-mark.svg" width="128" alt="RCAMP logo"></p>
 <h1 align="center">RCAMP</h1>
 <p align="center"><strong>One controller. Many devices. Local by default.</strong></p>
@@ -7,70 +9,68 @@
 RCAMP is a local-first control plane with a shared Rust core. The desktop GUI, Android app, and RCAMP/CLI speak through the same device model instead of duplicating hardware logic.
 
 ```text
-              ┌── RCAMP GUI ───── Linux · Windows · Android
-              │
-rcamp-core ───┼── RCAMP/CLI ───── Linux · Windows
-              │
-              └── RCAMP/RTOS ──── ESP32 · Arduino · targets
+                ┌── RCAMP GUI ───── Linux · Windows · Android
+                │
+ rcamp-core ───┼── RCAMP/CLI ───── Linux · Windows
+                │
+                └── RCAMP/RTOS ──── ESP32 · Arduino · targets
 ```
 
 No RCAMP cloud account is required for basic operation. Your device can communicate with your computer over Wi-Fi, Bluetooth, USB, or serial.
 
-## Product surface
+## Tech Stack
+
+### Website (Next.js + Tabler Design)
+
+The project website is a modern, cool-designed Next.js 15 site with:
+
+| Feature | Description |
+| --- | --- |
+| **Design Aesthetic** | Dark theme with purple accent, cards with rounded corners, subtle shadows |
+| **Layout** | Responsive sidebar on left, main content area on right |
+| **Navigation** | Vertical sidebar with tabler icons, topbar with breadcrumb |
+| **Components** | Card-based panels with consistent gray-800 / gray-600 theme |
+| **Icons** | Tabler.io icons via CDN `data-icon="tabler:name"` syntax |
+| **Typography** | `fw-bold`, `text-muted`, `text-primary` color classes |
+| **Static Export** | `output: 'export'` in `next.config.mjs` |
+
+The website features Home, About, CLI, and Docs pages with cohesive dark-themed design using Tabler iconography and custom CSS classes.
 
 | Surface | Purpose |
 | --- | --- |
-| **RCAMP GUI** | Tauri 2 + Svelte workspace with HQ, Tools, Settings, Preferences, Plugin, and About tabs |
-| **RCAMP/CLI** | Rust command interface and keyboard-first TUI for Linux and Windows |
-| **rcamp-core** | Shared device manager, profile validation, transport model, and flashing API |
-| **RCAMP/RTOS** | Reference ESP32 Wi-Fi/TCP and Arduino USB/Serial target firmware |
+| **RCAMP GUI** (Next.js + React + Tabler) | Dashboard with Tabler styling, HQ, Tools, Settings, Plugin, and About tabs |
+| **RCAMP/CLI** (Rust) | Command interface and keyboard-first TUI for Linux and Windows |
+| **rcamp-core** (Rust) | Shared device manager, profile validation, transport model, and flashing API |
+| **RCAMP/RTOS** | Reference ESP32 and Arduino target firmware |
 
-The GUI also includes a structured **Logs** tab, an **RCAMP/RTOS Shell** tab, and an **ESP32 Simulation** tab. The simulator provides a virtual ESP32 target for trying `rcampfetch`, shell commands, telemetry-style status, and the task catalog before connecting physical hardware. The shell is a safe simulated target console: it sends an allowlisted command set (`help`, `status`, `info`, `capabilities`, `ping`, `logs`, `whoami`, `rcampfetch`, `task`, and guarded `sudo`) over a direct, line-flushed TCP connection. It never executes a command on the host computer.
+### Application (Tauri/CLI)
 
-## RCAMP/RTOS flashing
+The RCAMP application uses Tabler.io design principles:
 
-The GUI Tools tab and CLI can flash target firmware using native vendor tools. RCAMP never evaluates a device-supplied shell command; it invokes a fixed tool with validated arguments. The Shell and Logs tabs provide realtime target interaction and structured events. `rcamp rcampfetch <address>` reports host and target details.
+| Component | Description |
+| --- | --- |
+| **TUI** | Keyboard-first terminal user interface |
+| **CLI** | Rust command interface with terminal output |
+| **Desktop GUI** | Built with Tauri + Tabler design system |
 
-```sh
-rcamp target flash --target esp32 --port COM3 --firmware rcamp-rtos.bin
-rcamp target flash --target arduino --port COM4 --firmware rcamp-rtos.hex
-```
+The GUI and CLI both leverage the shared `rcamp-core` Rust crate for device management, with Tabler-inspired visual design in the desktop application.
 
-Install `esptool` for ESP32 or `avrdude` for Arduino, then see [`rcamp-rtos/README.md`](rcamp-rtos/README.md) for firmware sketches and the target line protocol.
-
-## Install RCAMP/CLI
+## Installation
 
 The release installers download signed-by-release artifacts and do not require a local Rust installation.
 
-Windows PowerShell:
+### Windows PowerShell:
 
 ```powershell
 irm https://raw.githubusercontent.com/KiddosTech/RCAMP/main/scripts/install.ps1 | iex
 ```
 
-Linux or macOS:
+### Linux or macOS:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/KiddosTech/RCAMP/main/scripts/install.sh | sh
 # or: wget -qO- https://raw.githubusercontent.com/KiddosTech/RCAMP/main/scripts/install.sh | sh
 ```
-
-## Device profiles
-
-Profiles describe capability without assuming that all hardware shares one protocol:
-
-```json
-{
-  "name": "Workshop RC Car",
-  "type": "rc-car",
-  "connection": "tcp",
-  "address": "192.168.1.42:8080",
-  "capabilities": ["drive", "light", "telemetry"],
-  "controls": { "motor_left": "motor_left", "motor_right": "motor_right" }
-}
-```
-
-Modelled transports include TCP, UDP, HTTP, WebSocket, MQTT, serial, USB-to-serial, and BLE GATT. Adapters are capability-driven and treat network, Bluetooth, serial, and profile input as untrusted.
 
 ## Development
 
@@ -101,20 +101,16 @@ cargo run -p rcamp-cli --
 ```text
 crates/rcamp-core/       Shared Rust device, profile, transport, and flashing logic
 crates/rcamp-cli/        RCAMP/CLI parser and TUI
-src/                     Svelte + TypeScript GUI
+src/                     Next.js + React + Tabler.io GUI
 src-tauri/               Tauri desktop/mobile host and commands
 rcamp-rtos/              ESP32 and Arduino reference firmware
-website/                 Multi-page project website
+website/                 Cool-designed Next.js website with Tabler.io
 scripts/                 CLI installers
 ```
 
 ## Website
 
-The project website is a Next.js static-export site with Product, About, RCAMP/CLI, and Docs routes. Run `npm install` and `npm run build` inside `website/`, then deploy the generated `website/out/` directory to Cloudflare Pages or GitHub Pages.
-
-## Contributing
-
-Keep hardware access inside `rcamp-core`; avoid implementing a second transport stack in the GUI or CLI. Read [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md) before opening a change.
+The website is a Next.js static-export site with Home, About, RCAMP/CLI, and Docs routes, designed with a cool dark aesthetic using Tabler.io icons and custom styling. Run `npm install` and `npm run build` inside `website/`, then deploy the generated `website/out/` directory to Cloudflare Pages or GitHub Pages.
 
 ## License
 

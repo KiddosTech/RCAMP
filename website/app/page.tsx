@@ -1,11 +1,62 @@
-import { IconArrowUpRight, IconBluetooth, IconBrandGithub, IconCpu, IconNetwork, IconPlugConnected, IconPlus, IconTerminal2, IconWifi } from '@tabler/icons-react';
-
-const icon = (name: string, color = '8dffcf') => `https://cdn.simpleicons.org/${name}/${color}`;
-
 export default function Home() {
-  return <main className="dashboard"><section className="welcome"><div><span className="eyebrow">COMMAND CENTER / OVERVIEW</span><h2>One controller.<br /><em>Many devices.</em></h2><p>Observe, connect, and control local hardware from one focused workspace.</p><div className="actions"><a className="button" href="/cli/">Install RCAMP/CLI <IconArrowUpRight size={16} /></a><a className="text-link" href="/docs/">Read the architecture</a></div></div><div className="hero-mark"><img src="/assets/rcamp-mark.svg" alt="RCAMP" /><span className="orbit orbit-a" /><span className="orbit orbit-b" /></div></section><section className="stat-grid"><article><span className="stat-label">REGISTERED DEVICES</span><strong>0</strong><small>Ready for your first profile</small></article><article><span className="stat-label">TRANSPORTS</span><strong>05</strong><small>TCP · UDP · BLE · USB · Serial</small></article><article><span className="stat-label">RUNTIME</span><strong>Online</strong><small>Shared Rust core v0.1.0</small></article></section><section className="content-grid"><div className="panel"><div className="panel-heading"><div><span className="eyebrow">FLEET</span><h3>Connected devices</h3></div><a className="icon-link" href="/about/"><IconPlus size={17} /></a></div><div className="empty-state"><IconCpu size={28} /><strong>No devices connected</strong><p>Add a profile in RCAMP GUI or launch the ESP32 simulator to start testing.</p><a className="button small" href="/docs/">Create a device profile</a></div></div><div className="panel quick-panel"><span className="eyebrow">QUICK ACCESS</span><h3>Build with the core</h3><a href="/cli/"><IconTerminal2 size={18} /><span><strong>RCAMP/CLI</strong><small>Keyboard-first device control</small></span><IconArrowUpRight size={16} /></a><a href="/docs/"><IconNetwork size={18} /><span><strong>Transport profiles</strong><small>Network, BLE, USB, and serial</small></span><IconArrowUpRight size={16} /></a></div></section><section className="transport-section"><div className="section-heading"><div><span className="eyebrow">LOCAL TRANSPORTS</span><h3>Meet hardware where it is.</h3></div><a className="text-link" href="/docs/">View documentation</a></div><div className="transport-grid"><Transport icon="wifi" title="Wi-Fi" text="TCP, UDP, HTTP, WebSocket, and MQTT-ready abstractions." tabler={<IconWifi size={19} />} /><Transport icon="bluetooth" title="Bluetooth" text="BLE GATT profiles for nearby, low-power control." tabler={<IconBluetooth size={19} />} /><Transport icon="usb" title="USB & Serial" text="USB-to-serial devices with validated command paths." tabler={<IconPlugConnected size={19} />} /><Transport icon="github" title="Open source" text="Extend profiles, transports, and plugins with the community." tabler={<IconBrandGithub size={19} />} /></div></section></main>;
-}
-
-function Transport({ icon: simpleIcon, title, text, tabler }: { icon: string; title: string; text: string; tabler: React.ReactNode }) {
-  return <article className="transport-card"><div className="transport-icon"><img src={icon(simpleIcon)} alt="" />{tabler}</div><h4>{title}</h4><p>{text}</p></article>;
+  return (
+    <main>
+      <div className="bg-gray-900 min-h-screen py-5">
+        <div className="container">
+          <div className="row">
+            <div className="col-12 text-center">
+              <div className="mb-4">
+                <i className="iconify text-primary" data-icon="tabler:cpu" style={{ fontSize: '4rem', marginBottom: '1rem' }} />
+              </div>
+              <h1 className="fw-bold text-white mb-3">One controller</h1>
+              <p className="text-muted mb-5">
+                Observe, connect, and control local hardware from one focused workspace.
+              </p>
+              <div className="d-flex gap-3 justify-content-center flex-wrap">
+                <a className="btn btn-primary btn-lg" href="/cli/">
+                  Install RCAMP/CLI
+                </a>
+                <a className="btn btn-outline-light text-white btn-lg" href="/docs/">
+                  Read the architecture
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="container mt-5">
+        <div className="row">
+          <div className="col-12 col-md-6">
+            <div className="card bg-gray-800 border-gray-600">
+              <div className="card-body">
+                <span className="text-primary small">REGISTERED DEVICES</span>
+                <h3 className="fw-bold">0</h3>
+                <small>Ready for your first profile</small>
+              </div>
+            </div>
+          </div>
+          <div className="col-12 col-md-6">
+            <div className="card bg-gray-800 border-gray-600">
+              <div className="card-body">
+                <span className="text-primary small">TRANSPORTS</span>
+                <h3 className="fw-bold">05</h3>
+                <small className="text-muted">TCP · UDP · BLE · USB · Serial</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="row mt-4">
+          <div className="col-12">
+            <div className="card bg-gray-800 border-gray-600">
+              <div className="card-body">
+                <span className="text-primary small">RUNTIME</span>
+                <h3 className="fw-bold">Online</h3>
+                <small>Shared Rust core v0.1.0</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
 }
